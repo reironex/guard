@@ -1,13 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Facebook Guard</title>
+  <title>Facebook Guard Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #f0f2f5;
+      text-align: center;
+    }
+    h2 {
+      color: #444;
+    }
+    input[type="file"] {
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4267B2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #365899;
+    }
+  </style>
 </head>
 <body>
-  <h2>Upload your appstate.json</h2>
+  <h2>Upload your Facebook <code>appstate.json</code></h2>
   <form action="/guard" method="post" enctype="multipart/form-data">
     <input type="file" name="appstate" accept=".json" required />
-    <button type="submit">Activate Guard</button>
+    <br />
+    <button type="submit">Activate Profile Guard</button>
   </form>
 </body>
 </html>
