@@ -3,27 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Facebook AppState Generator</title>
+  <title>FB AppState Guard Enabler</title>
   <style>
     body {
-      background: #f7f0ff;
+      background: #f8f0ff;
       font-family: Arial, sans-serif;
-      color: #333;
       padding: 20px;
       max-width: 700px;
       margin: auto;
     }
-    h1 {
-      color: #b135d1;
-    }
     textarea {
       width: 100%;
-      font-family: monospace;
-      font-size: 14px;
       padding: 10px;
-      margin-bottom: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-family: monospace;
+      font-size: 14px;
+      margin-bottom: 10px;
     }
     button {
       background-color: #b135d1;
@@ -36,37 +32,27 @@
     button:hover {
       background-color: #951bb0;
     }
-    .output {
-      background: #eee;
-      border-radius: 8px;
-      padding: 10px;
-      white-space: pre-wrap;
-      word-break: break-all;
+    .status {
+      margin-top: 10px;
+      color: green;
     }
     .error {
       color: red;
-      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>🛡️ Facebook AppState Generator</h1>
+  <h1>🛡️ FB AppState + Profile Guard Enabler</h1>
 
-  <p>I-paste ang full browser-exported cookie JSON ng Facebook account mo dito:</p>
   <textarea id="cookieInput" rows="10" placeholder='[{"name":"c_user","value":"..."},{"name":"xs","value":"..."}]'></textarea>
+  <button onclick="convert()">Convert + Enable Guard</button>
 
-  <button onclick="convert()">Convert to AppState</button>
-
-  <p id="error" class="error"></p>
-
-  <h3>✅ AppState Output</h3>
-  <textarea id="output" rows="4" readonly></textarea>
+  <p id="status" class="status"></p>
 
   <script>
-    function convert() {
+    async function convert() {
       const input = document.getElementById("cookieInput").value;
-      const errorEl = document.getElementById("error");
-      const outputEl = document.getElementById("output");
+      const statusEl = document.getElementById("status");
 
       try {
         const cookies = JSON.parse(input);
@@ -74,21 +60,47 @@
         const xs = cookies.find(c => c.name === "xs")?.value;
 
         if (!c_user || !xs) {
-          errorEl.textContent = "❌ Invalid cookies: Missing 'c_user' or 'xs'";
-          outputEl.value = "";
+          statusEl.innerHTML = "❌ Missing 'c_user' or 'xs'";
+          statusEl.className = "status error";
           return;
         }
+
+        statusEl.innerHTML = "⏳ Enabling Profile Guard...";
+        statusEl.className = "status";
 
         const appstate = [
           { key: "c_user", value: c_user },
           { key: "xs", value: xs }
         ];
 
-        outputEl.value = JSON.stringify(appstate, null, 2);
-        errorEl.textContent = "";
-      } catch (e) {
-        errorEl.textContent = "⚠️ Failed to convert. Invalid JSON format?";
-        outputEl.value = "";
+        const jar = appstate.map(({ key, value }) => `${key}=${value}`).join("; ");
+
+        const res = await fetch("https://www.facebook.com/api/graphql/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Cookie": jar,
+          },
+          body: new URLSearchParams({
+            doc_id: "1477043292367183",
+            variables: JSON.stringify({
+              is_shielded: true,
+              actor_id: c_user,
+              client_mutation_id: Math.floor(Math.random() * 19e9).toString()
+            })
+          })
+        });
+
+        const text = await res.text();
+        if (text.includes("true")) {
+          statusEl.innerHTML = "✅ Profile Guard enabled successfully!";
+        } else {
+          statusEl.innerHTML = "⚠️ Failed to enable. AppState might be expired.";
+          statusEl.className = "status error";
+        }
+      } catch (err) {
+        statusEl.innerHTML = "⚠️ Error: " + err.message;
+        statusEl.className = "status error";
       }
     }
   </script>
