@@ -1,34 +1,31 @@
-const axios = require("axios");
+const express = require("express");
+const activateGuard = require("./guard");
 
-module.exports = async function activateGuard(appstate) {
-  const cookies = appstate.map(c => `${c.key}=${c.value}`).join("; ");
-  const c_user = appstate.find(c => c.key === "c_user")?.value;
-  const xs = appstate.find(c => c.key === "xs")?.value;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  if (!c_user || !xs) throw new Error("Missing required cookies: c_user or xs");
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-  const headers = {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "User-Agent": "Mozilla/5.0 (Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    "Cookie": cookies
-  };
+app.get("/", (req, res) => {
+  res.send(`
+    <h2>🛡️ FB Profile Guard</h2>
+    <form method="POST" action="/activate">
+      <textarea name="appstate" rows="15" cols="60" placeholder='Paste your appstate JSON here'></textarea><br><br>
+      <button type="submit">Activate Guard</button>
+    </form>
+  `);
+});
 
-  const data = new URLSearchParams({
-    variables: JSON.stringify({
-      is_shielded: true,
-      session_id: "1234567890", // random session id
-      actor_id: c_user,
-      client_mutation_id: Math.floor(Math.random() * 1e10).toString()
-    }),
-    doc_id: "1477043292367183" // ito ang doc_id ng Profile Guard mutation
-  });
-
-  const response = await axios.post("https://www.facebook.com/api/graphql/", data, { headers });
-
-  if (response.data?.errors) {
-    throw new Error("FB Error: " + response.data.errors[0]?.message);
+app.post("/activate", async (req, res) => {
+  try {
+    const raw = req.body.appstate;
+    const appstate = JSON.parse(raw);
+    const result = await activateGuard(appstate);
+    res.send(`<p>${result}</p><a href="/">⬅ Back</a>`);
+  } catch (err) {
+    res.status(400).send(`<pre>❌ Error:\n${err.message}</pre><a href="/">⬅ Back</a>`);
   }
+});
 
-  return "Profile Guard successfully activate
-    d!";
-};
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
