@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Facebook Guard</title>
+</head>
+<body>
+  <h2>Upload your appstate.json</h2>
+  <form action="/guard" method="post" enctype="multipart/form-data">
+    <input type="file" name="appstate" accept=".json" required />
+    <button type="submit">Activate Guard</button>
+  </form>
+</body>
+</html>
