@@ -1,46 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Facebook Guard Activator</title>
+  <title>Facebook Guard On</title>
   <style>
-    body { font-family: sans-serif; padding: 2em; background: #111; color: #fff; }
-    input, button { margin-top: 1em; padding: 0.5em; font-size: 1em; }
-    #log { white-space: pre-wrap; margin-top: 1em; background: #222; padding: 1em; }
+    body {
+      background: #121212;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    textarea {
+      width: 90%;
+      height: 200px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #00ffcc;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h1>Activate Facebook Profile Guard 🔒</h1>
-  <input type="file" id="cookieFile" />
-  <button onclick="convertAndSend()">Activate Guard</button>
-  <div id="log"></div>
+  <h1>🛡 Facebook Guard On</h1>
+  <p>I-paste ang AppState JSON mo dito:</p>
+  <textarea id="appstate" placeholder='[{"key":"c_user",...}]'></textarea><br>
+  <button onclick="activate()">Activate Guard</button>
+  <div id="status"></div>
 
   <script>
-    async function convertAndSend() {
-      const file = document.getElementById('cookieFile').files[0];
-      if (!file) return alert("Please upload your cookies JSON file.");
+    async function activate() {
+      const appState = document.getElementById("appstate").value;
+      if (!appState) return alert("Pakilagay ang AppState JSON mo.");
 
-      const text = await file.text();
-      let cookies;
+      document.getElementById("status").innerText = "Ina-activate ang Guard...";
+
       try {
-        cookies = JSON.parse(text);
+        const res = await fetch("/api/guard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ appState: JSON.parse(appState) })
+        });
+        const data = await res.json();
+        document.getElementById("status").innerText = data.message;
       } catch (e) {
-        return alert("Invalid JSON format.");
+        document.getElementById("status").innerText = "Error: " + e.message;
       }
-
-      const appstate = cookies.map(c => ({
-        key: c.name,
-        value: c.value
-      }));
-
-      const res = await fetch('/api/guard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(appstate)
-      });
-
-      const result = await res.text();
-      document.getElementById('log').innerText = result;
     }
   </script>
 </body>
