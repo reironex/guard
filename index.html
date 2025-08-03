@@ -2,106 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FB AppState Guard Enabler</title>
+  <title>Facebook Guard Activator</title>
   <style>
-    body {
-      background: #f8f0ff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 700px;
-      margin: auto;
-    }
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-family: monospace;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    button {
-      background-color: #b135d1;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #951bb0;
-    }
-    .status {
-      margin-top: 10px;
-      color: green;
-    }
-    .error {
-      color: red;
-    }
+    body { font-family: sans-serif; padding: 2em; background: #111; color: #fff; }
+    input, button { margin-top: 1em; padding: 0.5em; font-size: 1em; }
+    #log { white-space: pre-wrap; margin-top: 1em; background: #222; padding: 1em; }
   </style>
 </head>
 <body>
-  <h1>🛡️ FB AppState + Profile Guard Enabler</h1>
-
-  <textarea id="cookieInput" rows="10" placeholder='[{"name":"c_user","value":"..."},{"name":"xs","value":"..."}]'></textarea>
-  <button onclick="convert()">Convert + Enable Guard</button>
-
-  <p id="status" class="status"></p>
+  <h1>Activate Facebook Profile Guard 🔒</h1>
+  <input type="file" id="cookieFile" />
+  <button onclick="convertAndSend()">Activate Guard</button>
+  <div id="log"></div>
 
   <script>
-    async function convert() {
-      const input = document.getElementById("cookieInput").value;
-      const statusEl = document.getElementById("status");
+    async function convertAndSend() {
+      const file = document.getElementById('cookieFile').files[0];
+      if (!file) return alert("Please upload your cookies JSON file.");
 
+      const text = await file.text();
+      let cookies;
       try {
-        const cookies = JSON.parse(input);
-        const c_user = cookies.find(c => c.name === "c_user")?.value;
-        const xs = cookies.find(c => c.name === "xs")?.value;
-
-        if (!c_user || !xs) {
-          statusEl.innerHTML = "❌ Missing 'c_user' or 'xs'";
-          statusEl.className = "status error";
-          return;
-        }
-
-        statusEl.innerHTML = "⏳ Enabling Profile Guard...";
-        statusEl.className = "status";
-
-        const appstate = [
-          { key: "c_user", value: c_user },
-          { key: "xs", value: xs }
-        ];
-
-        const jar = appstate.map(({ key, value }) => `${key}=${value}`).join("; ");
-
-        const res = await fetch("https://www.facebook.com/api/graphql/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Cookie": jar,
-          },
-          body: new URLSearchParams({
-            doc_id: "1477043292367183",
-            variables: JSON.stringify({
-              is_shielded: true,
-              actor_id: c_user,
-              client_mutation_id: Math.floor(Math.random() * 19e9).toString()
-            })
-          })
-        });
-
-        const text = await res.text();
-        if (text.includes("true")) {
-          statusEl.innerHTML = "✅ Profile Guard enabled successfully!";
-        } else {
-          statusEl.innerHTML = "⚠️ Failed to enable. AppState might be expired.";
-          statusEl.className = "status error";
-        }
-      } catch (err) {
-        statusEl.innerHTML = "⚠️ Error: " + err.message;
-        statusEl.className = "status error";
+        cookies = JSON.parse(text);
+      } catch (e) {
+        return alert("Invalid JSON format.");
       }
+
+      const appstate = cookies.map(c => ({
+        key: c.name,
+        value: c.value
+      }));
+
+      const res = await fetch('/api/guard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appstate)
+      });
+
+      const result = await res.text();
+      document.getElementById('log').innerText = result;
     }
   </script>
 </body>
