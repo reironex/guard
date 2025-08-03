@@ -1,57 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="tl">
 <head>
+  <meta charset="UTF-8">
   <title>Facebook Guard On</title>
   <style>
     body {
       background: #121212;
       color: white;
+      font-family: Arial, sans-serif;
       text-align: center;
-      font-family: sans-serif;
-      padding: 20px;
+      padding: 30px;
     }
     textarea {
       width: 90%;
       height: 200px;
       margin-bottom: 20px;
+      padding: 10px;
+      font-size: 14px;
+      background: #1e1e1e;
+      color: #00ffcc;
+      border: 1px solid #444;
     }
     button {
-      padding: 10px 20px;
-      background: #00ffcc;
-      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
       font-weight: bold;
+      background: #00ffcc;
+      color: #000;
+      border: none;
       cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #00ffaa;
     }
     #status {
       margin-top: 20px;
       font-size: 18px;
+      color: #ffcc00;
     }
   </style>
 </head>
 <body>
   <h1>🛡 Facebook Guard On</h1>
-  <p>I-paste ang AppState JSON mo dito:</p>
-  <textarea id="appstate" placeholder='[{"key":"c_user",...}]'></textarea><br>
+  <p>I-paste mo ang AppState JSON mo sa box sa ibaba:</p>
+  <textarea id="appstate" placeholder='[{"key":"c_user","value":"1234567890",...}]'></textarea><br>
   <button onclick="activate()">Activate Guard</button>
   <div id="status"></div>
 
   <script>
     async function activate() {
-      const appState = document.getElementById("appstate").value;
-      if (!appState) return alert("Pakilagay ang AppState JSON mo.");
+      const rawAppState = document.getElementById("appstate").value.trim();
+      if (!rawAppState) {
+        return document.getElementById("status").innerText = "❌ Pakilagay muna ang AppState JSON.";
+      }
 
-      document.getElementById("status").innerText = "Ina-activate ang Guard...";
+      let parsed;
+      try {
+        parsed = JSON.parse(rawAppState);
+        if (!Array.isArray(parsed)) throw new Error("AppState should be an array.");
+      } catch (e) {
+        return document.getElementById("status").innerText = "❌ Mali ang format ng AppState JSON mo.";
+      }
+
+      document.getElementById("status").innerText = "⏳ Ina-activate ang Guard...";
 
       try {
         const res = await fetch("/api/guard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ appState: JSON.parse(appState) })
+          body: JSON.stringify({ appState: parsed })
         });
+
         const data = await res.json();
-        document.getElementById("status").innerText = data.message;
-      } catch (e) {
-        document.getElementById("status").innerText = "Error: " + e.message;
+        document.getElementById("status").innerText = data.message || "Walang response.";
+      } catch (err) {
+        document.getElementById("status").innerText = "⚠️ Error sa pag-request: " + err.message;
       }
     }
   </script>
