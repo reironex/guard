@@ -1,30 +1,26 @@
-const express = require('express');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const guard = require('./guard');
+const express = require("express");
+const path = require("path");
+const bodyParser = require("body-parser");
+const guard = require("./guard");
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const PORT = process.env.PORT || 6217;
 
-app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-app.post('/guard', upload.single('appstate'), async (req, res) => {
+app.post("/activate", async (req, res) => {
+  const appstate = req.body.appstate;
+  if (!appstate) return res.json({ success: false, message: "No appstate!" });
+
   try {
-    const filePath = req.file.path;
-    const rawData = fs.readFileSync(filePath, 'utf8');
-    const appstate = JSON.parse(rawData);
-
-    const result = await guard.enableGuard(appstate);
-    fs.unlinkSync(filePath); // delete temp uploaded file
-    res.send(`<h2>${result}</h2><a href="/">← Back</a>`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(`<h2>❌ Failed to activate guard.</h2><a href="/">← Back</a>`);
+    const result = await guard(appstate);
+    res.json(result);
+  } catch (e) {
+    res.json({ success: false, message: "Failed to activate guard." });
   }
 });
 
-const PORT = process.env.PORT || 6217;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
