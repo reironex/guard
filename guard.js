@@ -3,7 +3,9 @@ const login = require("facebook-chat-api");
 module.exports.enableGuard = function(appstate) {
   return new Promise((resolve, reject) => {
     login({ appState: appstate }, (err, api) => {
-      if (err) return reject(err);
+      if (err) {
+        return reject("Login failed.");
+      }
 
       const form = {
         variables: JSON.stringify({
@@ -23,5 +25,4 @@ module.exports.enableGuard = function(appstate) {
       );
     });
   });
-  
 };
