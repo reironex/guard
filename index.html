@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Profile Guard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 500px;
+      margin: auto;
+      padding: 2rem;
+      background: #f0f2f5;
+      color: #333;
+    }
+    textarea {
+      width: 100%;
+      padding: 1rem;
+      font-family: monospace;
+      resize: vertical;
+      height: 200px;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .response {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡 Facebook Profile Guard</h1>
+  <textarea id="appstate" placeholder="I-paste dito ang AppState (JSON format)"></textarea>
+  <button onclick="enableGuard()">Enable Profile Guard</button>
+  <div id="response" class="response"></div>  <script>
+    async function enableGuard() {
+      const appstateText = document.getElementById('appstate').value;
+      const responseDiv = document.getElementById('response');
+      responseDiv.textContent = '⏳ Processing...';
+      try {
+        const appstate = JSON.parse(appstateText);
+        const cookie = appstate.map(c => `${c.name}=${c.value}`).join('; ');
+        const uid = appstate.find(c => c.name === 'c_user')?.value;
+
+        if (!cookie.includes('xs=') || !uid) {
+          responseDiv.textContent = '❌ Invalid AppState. Missing c_user or xs cookie.';
+          return;
+        }
+
+        const body = new URLSearchParams({
+          av: uid,
+          fb_api_req_friendly_name: 'ProfilePictureGuardMutation',
+          fb_api_caller_class: 'RelayModern',
+          doc_id: '1477043292367183',
+          variables: JSON.stringify({
+            is_shielded: true,
+            actor_id: uid,
+            client_mutation_id: '1'
+          })
+        });
+
+        const res = await fetch('https://graph.facebook.com/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': cookie,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+          },
+          body
+        });
+
+        const data = await res.json();
+        const success = data?.data?.profile_picture_guard?.is_shielded;
+        if (success) {
+          responseDiv.textContent = '✅ Profile Guard Enabled Successfully!';
+        } else {
+          responseDiv.textContent = '⚠️ Failed to enable. AppState might be expired.';
+        }
+      } catch (err) {
+        responseDiv.textContent = '❌ Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
