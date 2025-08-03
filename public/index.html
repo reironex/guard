@@ -1,39 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Facebook Guard Tool</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FB Profile Guard</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      background: #f0f2f5;
+      font-family: sans-serif;
+      background: #121212;
+      color: #fff;
+      padding: 20px;
       text-align: center;
     }
-    h2 {
-      color: #444;
-    }
-    input[type="file"] {
-      margin: 20px;
+    textarea {
+      width: 90%;
+      height: 200px;
+      margin-bottom: 10px;
+      font-family: monospace;
     }
     button {
       padding: 10px 20px;
-      background-color: #4267B2;
+      background: #00b894;
       color: white;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #365899;
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <h2>Upload your Facebook <code>appstate.json</code></h2>
-  <form action="/guard" method="post" enctype="multipart/form-data">
-    <input type="file" name="appstate" accept=".json" required />
-    <br />
-    <button type="submit">Activate Profile Guard</button>
-  </form>
+  <h2>🔒 FB Profile Guard</h2>
+  <p>Paste your <code>appstate.json</code> or cookie string:</p>
+  <textarea id="appstate"></textarea><br />
+  <button onclick="activate()">Activate Guard</button>
+  <div id="result"></div>
+
+  <script>
+    async function activate() {
+      const appstate = document.getElementById("appstate").value;
+      const res = await fetch("/activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appstate }),
+      });
+      const data = await res.json();
+      const msg = data.success
+        ? "✅ " + data.message
+        : "❌ " + data.message;
+      document.getElementById("result").innerText = msg;
+    }
+  </script>
 </body>
 </html>
