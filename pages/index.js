@@ -23,24 +23,33 @@ export default function Home() {
   };
 
   return (
-    <main className="p-6 max-w-xl mx-auto text-center">
-      <h1 className="text-2xl font-bold mb-4">🛡 Facebook Profile Guard</h1>
+    <main style={{ padding: '2rem', maxWidth: '500px', margin: 'auto', textAlign: 'center' }}>
+      <h1 style={{ marginBottom: '1rem' }}>🛡 Facebook Profile Guard</h1>
       <textarea
         rows={10}
-        className="w-full p-2 border rounded mb-4"
-        placeholder='Paste AppState (JSON format)'
+        style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+        placeholder="Paste AppState (JSON format)"
         value={appstate}
         onChange={(e) => setAppstate(e.target.value)}
       />
       <button
         onClick={handleSubmit}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
         disabled={loading}
+        style={{
+          background: '#1877f2',
+          color: '#fff',
+          padding: '0.75rem 1.5rem',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: loading ? 'not-allowed' : 'pointer'
+        }}
       >
         {loading ? 'Enabling...' : 'Enable Profile Guard'}
       </button>
       {response && (
-        <div className="mt-4 p-3 bg-gray-100 rounded border">{response}</div>
+        <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0f2f5', borderRadius: '4px' }}>
+          {response}
+        </div>
       )}
     </main>
   );
