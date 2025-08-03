@@ -1,56 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>FB Profile Guard</title>
   <style>
     body {
       font-family: sans-serif;
       background: #121212;
       color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 20px;
-      text-align: center;
     }
     textarea {
       width: 90%;
       height: 200px;
-      margin-bottom: 10px;
+      padding: 10px;
       font-family: monospace;
     }
     button {
+      margin-top: 10px;
       padding: 10px 20px;
-      background: #00b894;
-      color: white;
+      background: #00aaff;
       border: none;
+      color: white;
+      font-weight: bold;
       cursor: pointer;
     }
     #result {
       margin-top: 20px;
-      font-size: 18px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>🔒 FB Profile Guard</h2>
-  <p>Paste your <code>appstate.json</code> or cookie string:</p>
-  <textarea id="appstate"></textarea><br />
-  <button onclick="activate()">Activate Guard</button>
+  <h2>Facebook Profile Guard</h2>
+  <textarea id="appstate" placeholder="Paste your appstate JSON here..."></textarea>
+  <button onclick="activate()">ACTIVATE GUARD</button>
   <div id="result"></div>
 
   <script>
     async function activate() {
-      const appstate = document.getElementById("appstate").value;
-      const res = await fetch("/activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appstate }),
-      });
-      const data = await res.json();
-      const msg = data.success
-        ? "✅ " + data.message
-        : "❌ " + data.message;
-      document.getElementById("result").innerText = msg;
+      const text = document.getElementById("appstate").value;
+      try {
+        const json = JSON.parse(text);
+        const res = await fetch("/guard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ appstate: json })
+        });
+        const data = await res.json();
+        document.getElementById("result").innerText = data.message;
+      } catch (e) {
+        document.getElementById("result").innerText = "Invalid JSON or Server Error";
+      }
     }
   </script>
 </body>
