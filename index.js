@@ -4,23 +4,22 @@ const bodyParser = require("body-parser");
 const guard = require("./guard");
 
 const app = express();
-const PORT = process.env.PORT || 6217;
+app.use(express.static("public"));
+app.use(bodyParser.json({ limit: "1mb" }));
 
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-app.post("/activate", async (req, res) => {
-  const appstate = req.body.appstate;
-  if (!appstate) return res.json({ success: false, message: "No appstate!" });
-
+app.post("/guard", async (req, res) => {
   try {
+    const appstate = req.body.appstate;
+    if (!Array.isArray(appstate)) return res.status(400).json({ success: false, message: "Invalid appstate format" });
+
     const result = await guard(appstate);
-    res.json(result);
+    res.json({ success: true, message: result });
   } catch (e) {
-    res.json({ success: false, message: "Failed to activate guard." });
+    res.status(400).json({ success: false, message: e.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(6217, () => {
+  console.log("Server started at http://localhost:6217");
+  
 });
